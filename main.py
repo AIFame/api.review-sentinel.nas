@@ -1,9 +1,18 @@
-import streamlit as st
-import requests
 import datetime
+import os
 from collections import namedtuple
+from typing import Final
+
+import requests
+import streamlit as st
+from dotenv import load_dotenv
+
 Review = namedtuple('Review', ['text', 'date', 'sentiment', 'votes'])
 reviews = []
+
+load_dotenv()
+
+HUGGINGFACE_API_KEY: Final[str] = os.environ['HUGGINGFACE_API_KEY'].strip()
 
 st.title("Movie Review Sentiment Analyzer")
 new_review_text = st.text_input("Enter a movie review: ")
@@ -14,7 +23,7 @@ for review in reviews:
     if review.sentiment is None:
         response = requests.post(
             "https://api.huggingface.co/analyze",
-            headers={"Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"},
+            headers={"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"},
             json={"text": review.text}
         )
         result = response.json()
