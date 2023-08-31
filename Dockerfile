@@ -14,7 +14,7 @@ FROM python:3.10-slim
 
 ENV mode=production
 
-EXPOSE 8599
+EXPOSE 8080
 
 WORKDIR /app
 
