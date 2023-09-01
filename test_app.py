@@ -1,7 +1,7 @@
-from app import main
-import pytest
+
 
 
 def test_main():
-    result = main()
-    assert result is None
+    import main
+
+    assert isinstance(main.reviews, list) is True
