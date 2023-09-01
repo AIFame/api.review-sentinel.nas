@@ -28,4 +28,7 @@ clean:
 	@find . -type f -name '<_io.BytesIO object at*' -exec rm -f {} +
 	@find . -type f -name '*.log' -exec rm -f {} +
 
+docker:
+	docker build -t review-ai .
+
 .PHONY: run install clean setup test

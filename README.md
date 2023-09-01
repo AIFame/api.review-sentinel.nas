@@ -26,8 +26,8 @@ To run the OS-Chat project using `Python` and `make`, follow these steps:
 To run the OS-Chat project using `Docker`, follow these steps:
 
 ```shell
-docker build -t sentinel-nas .
-docker run -p 8080:8080 sentinel-nas
+docker build -t app .
+docker run -p 8080:8080 app
 ```
 
 > For developers,
