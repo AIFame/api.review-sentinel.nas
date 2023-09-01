@@ -1,9 +1,11 @@
 import datetime
 import os
+import uuid
 from dataclasses import dataclass
 from pprint import pprint
 from typing import Final
 
+import cachetools
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -12,10 +14,17 @@ load_dotenv()
 from clarifai import Workflow
 
 # Review = namedtuple('Review', ['text', 'date', 'sentiment', 'votes'])
-reviews = []
 
-st.session_state.reviews = reviews
+c = cachetools.Cache(maxsize=12)
 
+if 'history' not in st.session_state:
+    print('history not found')
+    st.session_state.history = c
+    c['reviews'] = []
+else:
+    c = st.session_state.history
+
+reviews = c['reviews']
 
 @dataclass
 class Review:
@@ -30,12 +39,16 @@ HUGGINGFACE_API_KEY: Final[str] = os.environ['HUGGINGFACE_API_KEY'].strip()
 st.title("Movie Review Sentiment Analyzer")
 new_review_text = st.text_input("Enter a movie review: ")
 if st.button("Add Review"):
-    reviews.append(Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0))
+    r = Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0)
 
-for review in st.session_state.reviews:
+    reviews.append(r)
+    # for i, ri in enumerate(reviews):
+    #     st.session_state.history.insert(i, ri)
+
+for review in reviews:
     # ic(review)
 
-    if review.sentiment is None:
+    if review.sentiment is None:  # FIXME ==""
         w1 = Workflow('sentiment-analysis')
 
         eg = [
@@ -75,16 +88,18 @@ for review in st.session_state.reviews:
         # review._replace(sentiment=sentiment)
         review.sentiment = sentiment
 
-for review in reviews:
-    print(review)
+# st.write(reviews)
+for i, review in enumerate(reviews):
+    print("rvcd rev", review)
     st.write(f"Review: {review.text}")
     st.write(f"Date: {review.date}")
     st.write(f"Sentiment: {review.sentiment}")
     st.write(f"Votes: {review.votes}")
 
-    if st.button("Upvote"):
+    if st.button("Upvote", key=uuid.uuid4()):
         review.votes += 1
         # review = review._replace(votes=review.votes + 1)
-    if st.button("Downvote"):
+    if st.button("Downvote", key=uuid.uuid4()):
         review.votes -= 1
         # review = review._replace(votes=review.votes - 1)
+
