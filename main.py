@@ -88,7 +88,7 @@ for review in reviews:
         o = outputs[1]
         possible_sentiments = ["Positive", "Negative", "Neutral"]
 
-        print(o)
+        # print(o)
 
         sentiment = o.data.text.raw
 
@@ -109,7 +109,6 @@ for review in reviews:
 
 # st.write(reviews)
 for i, review in enumerate(reviews):
-    print("rvcd rev", review)
     st.write(f"Review: {review.text}")
     st.write(f"Date: {review.date}")
     st.write(f"Sentiment: {review.sentiment}")
