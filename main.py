@@ -1,6 +1,5 @@
 import datetime
 import os
-import uuid
 from dataclasses import dataclass
 from pprint import pprint
 from typing import Final
@@ -15,7 +14,7 @@ from clarifai import Workflow
 
 # Review = namedtuple('Review', ['text', 'date', 'sentiment', 'votes'])
 
-c = cachetools.Cache(maxsize=12)
+c = cachetools.Cache(maxsize=100)
 
 if 'history' not in st.session_state:
     print('history not found')
@@ -25,6 +24,7 @@ else:
     c = st.session_state.history
 
 reviews = c['reviews']
+
 
 @dataclass
 class Review:
@@ -37,30 +37,25 @@ class Review:
 HUGGINGFACE_API_KEY: Final[str] = os.environ['HUGGINGFACE_API_KEY'].strip()
 
 st.title("Movie Review Sentiment Analyzer")
-new_review_text = st.text_input("Enter a movie review: ")
-if st.button("Add Review"):
-    r = Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0)
 
+sample_review = """
+This film stands out in today's cinema landscape. Every scene is thoughtfully crafted, and the
+        characters have depth and nuance. The story flows naturally, keeping viewers engaged. It's a
+        high point in recent movie releases.
+""".strip()
+
+new_review_text = st.text_input("Enter a movie review: ", value=sample_review)
+if st.button("Add Review") and new_review_text.strip() != "":
+    r = Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0)
     reviews.append(r)
-    # for i, ri in enumerate(reviews):
-    #     st.session_state.history.insert(i, ri)
 
 for review in reviews:
     # ic(review)
 
-    if review.sentiment is None:  # FIXME ==""
+    if review.sentiment == "":
         w1 = Workflow('sentiment-analysis')
 
-        eg = [
-            {
-                "review": f"""This film stands out in today's cinema landscape. Every scene is thoughtfully crafted, and the
-        characters have depth and nuance. The story flows naturally, keeping viewers engaged. It's a
-        high point in recent movie releases.""".strip(),
-                "sentiment": 'positive'
-            }
-        ]
-
-        res = w1.run(eg[0]["review"])
+        res = w1.run(review.text)
 
         outputs = res.results[0].outputs
 
@@ -96,10 +91,12 @@ for i, review in enumerate(reviews):
     st.write(f"Sentiment: {review.sentiment}")
     st.write(f"Votes: {review.votes}")
 
-    if st.button("Upvote", key=uuid.uuid4()):
-        review.votes += 1
-        # review = review._replace(votes=review.votes + 1)
-    if st.button("Downvote", key=uuid.uuid4()):
-        review.votes -= 1
-        # review = review._replace(votes=review.votes - 1)
 
+    def onclick(inc):
+        review.votes += inc
+
+
+    st.button("Upvote", key=f"up-{i}", on_click=lambda: onclick(1))
+    # review = review._replace(votes=review.votes + 1)
+    st.button("Downvote", key=f"down-{i}", on_click=lambda: onclick(-1))
+    # review = review._replace(votes=review.votes - 1)
