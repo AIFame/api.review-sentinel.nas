@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 from dataclasses import dataclass
 from pprint import pprint
@@ -47,6 +48,7 @@ if 'history' not in st.session_state:
     print('history not found')
     st.session_state.history = c
     c['reviews'] = []
+    c['in_progress'] = False
 else:
     c = st.session_state.history
 
@@ -66,17 +68,24 @@ st.title("Movie Review Sentiment Analyzer")
 sample_review = random.choice(sample_reviews)
 
 new_review_text = st.text_input("Enter a movie review: ", value=sample_review["text"])
-if st.button("Add Review") and new_review_text.strip() != "":
+if st.button("Add Review", disabled=c['in_progress']) and new_review_text.strip() != "":
     r = Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0)
     reviews.append(r)
+    c['in_progress'] = True
 
 for i, review in enumerate(reviews):
     # ic(review)
-
     if review.sentiment == "":
-        w1 = Workflow('sentiment-analysis')
+        with st.spinner(text='Sentiment Analysis In Progress'):
+            c['in_progress'] = True
+            w1 = Workflow('sentiment-analysis')
+            try:
+                res = w1.run(review.text)
+            except Exception as e:
+                logging.error(e)
+                continue
 
-        res = w1.run(review.text)
+            c['in_progress'] = False
 
         st.balloons()
 
