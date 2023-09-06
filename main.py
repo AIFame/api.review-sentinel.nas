@@ -1,9 +1,7 @@
 import datetime
-import os
 import random
 from dataclasses import dataclass
 from pprint import pprint
-from typing import Final
 
 import cachetools
 import streamlit as st
@@ -41,10 +39,11 @@ sample_reviews = [
 ]
 
 # Review = namedtuple('Review', ['text', 'date', 'sentiment', 'votes'])
+st.toast('Welcome to review sentinel')
 
-c = cachetools.Cache(maxsize=100)
 
 if 'history' not in st.session_state:
+    c = cachetools.Cache(maxsize=100)
     print('history not found')
     st.session_state.history = c
     c['reviews'] = []
@@ -62,8 +61,6 @@ class Review:
     votes: int
 
 
-HUGGINGFACE_API_KEY: Final[str] = os.environ['HUGGINGFACE_API_KEY'].strip()
-
 st.title("Movie Review Sentiment Analyzer")
 
 sample_review = random.choice(sample_reviews)
@@ -73,13 +70,15 @@ if st.button("Add Review") and new_review_text.strip() != "":
     r = Review(text=new_review_text, date=str(datetime.datetime.now()), sentiment='', votes=0)
     reviews.append(r)
 
-for review in reviews:
+for i, review in enumerate(reviews):
     # ic(review)
 
     if review.sentiment == "":
         w1 = Workflow('sentiment-analysis')
 
         res = w1.run(review.text)
+
+        st.balloons()
 
         outputs = res.results[0].outputs
 
@@ -106,20 +105,22 @@ for review in reviews:
         # Update the review's sentiment
         # review._replace(sentiment=sentiment)
         review.sentiment = sentiment
-
-# st.write(reviews)
-for i, review in enumerate(reviews):
     st.write(f"Review: {review.text}")
     st.write(f"Date: {review.date}")
     st.write(f"Sentiment: {review.sentiment}")
     st.write(f"Votes: {review.votes}")
 
 
-    def onclick(inc):
-        review.votes += inc
+    def onclick(i, inc):
+        print(f"voting-{i}")
+        reviews[i].votes += inc
 
 
-    st.button("Upvote", key=f"up-{i}", on_click=lambda: onclick(1))
+    st.button("Upvote", key=f"up-{i}", on_click=lambda i=i: onclick(i, 1))
     # review = review._replace(votes=review.votes + 1)
-    st.button("Downvote", key=f"down-{i}", on_click=lambda: onclick(-1))
-    # review = review._replace(votes=review.votes - 1)
+    st.button("Downvote", key=f"down-{i}", on_click=lambda i=i: onclick(i, -1))
+
+# st.write(reviews)
+# for i, review in enumerate(reviews):
+#
+#     # review = review._replace(votes=review.votes - 1)
